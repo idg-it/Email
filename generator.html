@@ -416,6 +416,14 @@
               </svg>
               <span>Copy Signature to Clipboard</span>
             </button>
+            <button class="btn btn-secondary" id="btnDownloadHtml">
+              <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path>
+                <polyline points="7 10 12 15 17 10"></polyline>
+                <line x1="12" y1="15" x2="12" y2="3"></line>
+              </svg>
+              <span>Download .HTML File</span>
+            </button>
             <button class="btn btn-secondary" id="btnCopyCode">
               <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <polyline points="16 18 22 12 16 6"></polyline>
@@ -1371,6 +1379,70 @@
         } else {
           showToast("Could not auto-copy. Please select and copy manually.");
         }
+      });
+
+      // Download Standalone .HTML File named after employee
+      document.getElementById("btnDownloadHtml").addEventListener("click", () => {
+        const rawName = inputName.value.trim() || "IDG Security Signature";
+        // Clean filename (e.g. "Donnica Yagao" -> "donnica-yagao.html")
+        const safeFilename = rawName
+          .toLowerCase()
+          .normalize("NFD")
+          .replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-")
+          .replace(/(^-|-$)/g, "") || "idg-signature";
+        const filename = `${safeFilename}.html`;
+
+        const preview = document.getElementById("signaturePreview");
+        const fullHtmlDocument = `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta
+      name="format-detection"
+      content="telephone=no, date=no, address=no, email=no"
+    />
+    <title>${rawName} - Email Signature</title>
+    <style type="text/css">
+      a[x-apple-data-detectors],
+      u + #body a,
+      #MessageViewBody a,
+      .ii a[href] {
+        color: inherit !important;
+        text-decoration: none !important;
+        font-size: inherit !important;
+        font-family: inherit !important;
+        font-weight: inherit !important;
+        line-height: inherit !important;
+      }
+    </style>
+  </head>
+  <body
+    style="
+      margin: 0;
+      padding: 14px;
+      background-color: #ffffff;
+      box-sizing: border-box;
+      -webkit-text-size-adjust: 100%;
+      -ms-text-size-adjust: 100%;
+    "
+  >
+${preview.innerHTML.trim()}
+  </body>
+</html>`;
+
+        const blob = new Blob([fullHtmlDocument], { type: "text/html;charset=utf-8" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast(`Downloaded ${filename}!`);
       });
 
       // Copy Raw HTML Code
