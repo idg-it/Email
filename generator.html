@@ -369,6 +369,14 @@
           </div>
 
           <div class="form-group">
+            <label for="officeLocation">Office Location (Country)</label>
+            <select id="officeLocation">
+              <option value="uae" selected>United Arab Emirates (Dubai)</option>
+              <option value="iraq">Iraq (Baghdad)</option>
+            </select>
+          </div>
+
+          <div class="form-group">
             <label for="mobile">Mobile / WhatsApp Number</label>
             <input
               type="text"
@@ -398,14 +406,6 @@
               placeholder="e.g. name@idg-security.com"
               autocomplete="email"
             />
-          </div>
-
-          <div class="form-group">
-            <label for="bannerTheme">Banner Style</label>
-            <select id="bannerTheme">
-              <option value="dark">Dark MSS Banner (Standard)</option>
-              <option value="white">White MSS Banner (On Top)</option>
-            </select>
           </div>
 
           <div class="actions">
@@ -575,6 +575,7 @@
                                           &nbsp;
                                         </td>
                                         <td
+                                          id="displayEntityName"
                                           valign="top"
                                           style="
                                             font-family: Helvetica, Arial, sans-serif;
@@ -610,6 +611,7 @@
                                           />
                                         </td>
                                         <td
+                                          id="displayEntityAddress"
                                           valign="top"
                                           style="
                                             font-family: Helvetica, Arial, sans-serif;
@@ -959,13 +961,15 @@
     <script>
       const inputName = document.getElementById("fullName");
       const inputTitle = document.getElementById("jobTitle");
+      const selectLocation = document.getElementById("officeLocation");
       const inputMobile = document.getElementById("mobile");
       const inputLandline = document.getElementById("landline");
       const inputEmail = document.getElementById("email");
-      const selectBanner = document.getElementById("bannerTheme");
 
       const displayFullName = document.getElementById("displayFullName");
       const displayJobTitle = document.getElementById("displayJobTitle");
+      const displayEntityName = document.getElementById("displayEntityName");
+      const displayEntityAddress = document.getElementById("displayEntityAddress");
       const displayMobileLink = document.getElementById("displayMobileLink");
       const displayMobileIconLink = document.getElementById("displayMobileIconLink");
       const displayLandlineLink = document.getElementById("displayLandlineLink");
@@ -982,16 +986,38 @@
 
       let autoFitEnabled = true;
 
+      // Official Corporate Entities
+      const ENTITIES = {
+        uae: {
+          country: "United Arab Emirates",
+          entityName: "IDG Group DMCC",
+          addressHtml: '<span style="color: #003057; text-decoration: none">Unit 15&#8203;01, The Do&#8203;me Tow&#8203;er, Clu&#8203;ster N, Jum&#8203;eirah La&#8203;ke Tow&#8203;ers<br />Du&#8203;bai, Uni&#8203;ted Ar&#8203;ab Emi&#8203;rates</span>',
+          defaultLandline: "+971 (04) 514 4958"
+        },
+        iraq: {
+          country: "Iraq",
+          entityName: "IDG for Security Services and Private Guards LLC",
+          addressHtml: '<span style="color: #003057; text-decoration: none">Vil&#8203;la 66, Str&#8203;eet 1, Dis&#8203;trict 609, Hun&#8203;ting Club Str&#8203;eet<br />Al Man&#8203;sour, Bagh&#8203;dad, Ir&#8203;aq</span>',
+          defaultLandline: "+964 788 000 5202"
+        }
+      };
+
+      let previousLocation = "uae";
+
       function sanitizePhoneForWhatsApp(phone) {
         let digits = phone.replace(/[^0-9]/g, "");
         if (!digits) return "https://wa.me/";
-        // Strip international prefix '00' if entered (e.g. 00971 -> 971)
+        // Strip international prefix '00' if entered (e.g. 00971 -> 971, 00964 -> 964)
         if (digits.startsWith("00")) {
           digits = digits.substring(2);
         }
         // Auto-convert local UAE mobile format (e.g. 058xxxxxxx -> 97158xxxxxxx)
         if (digits.startsWith("05") && digits.length === 10) {
           digits = "971" + digits.substring(1);
+        }
+        // Auto-convert local Iraq mobile format (e.g. 0788xxxxxxx -> 964788xxxxxxx)
+        if (digits.startsWith("07") && digits.length === 11) {
+          digits = "964" + digits.substring(1);
         }
         return "https://wa.me/" + digits;
       }
@@ -1001,285 +1027,180 @@
         return "tel:" + cleaned;
       }
 
+      // Standard Corporate Banners: White MSS on Top, Partner Entities on Bottom
       function renderBanners() {
-        if (selectBanner.value === "white") {
-          // White layout (matching white.html): White MSS banner on TOP, Certifications on BOTTOM
-          bannersContainer.innerHTML = `
-            <table
-              cellpadding="0"
-              cellspacing="0"
-              border="0"
-              style="width: 100%; max-width: 580px; border-collapse: collapse"
-            >
-              <tbody>
-                <tr>
-                  <td valign="top" style="padding: 0 0 4px 0">
-                    <a
-                      href="https://www.mssglobal.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style="display: block; text-decoration: none"
-                    >
-                      <img
-                        src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-mss-white.png"
-                        nosend="1"
-                        border="0"
-                        width="580"
-                        height="44"
-                        alt="MSS Global Certifications"
-                        title="MSS Global Certifications"
-                        style="
-                          display: block;
-                          width: 100%;
-                          height: 44px;
-                          border: 0;
-                        "
-                      />
-                    </a>
-                  </td>
-                </tr>
-                <tr>
-                  <td valign="top" style="padding: 0">
-                    <table
-                      cellpadding="0"
-                      cellspacing="0"
+        bannersContainer.innerHTML = `
+          <table
+            cellpadding="0"
+            cellspacing="0"
+            border="0"
+            style="width: 100%; max-width: 580px; border-collapse: collapse"
+          >
+            <tbody>
+              <tr>
+                <td valign="top" style="padding: 0 0 4px 0">
+                  <a
+                    href="https://www.mssglobal.com/"
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style="display: block; text-decoration: none"
+                  >
+                    <img
+                      src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-mss-white.png"
+                      nosend="1"
                       border="0"
+                      width="580"
+                      height="44"
+                      alt="MSS Global Certifications"
+                      title="MSS Global Certifications"
                       style="
+                        display: block;
                         width: 100%;
-                        border-collapse: collapse;
-                        table-layout: fixed;
+                        height: 44px;
+                        border: 0;
                       "
-                    >
-                      <tbody>
-                        <tr>
-                          <td
-                            width="195"
-                            valign="top"
-                            style="width: 33.62%; padding: 0"
+                    />
+                  </a>
+                </td>
+              </tr>
+              <tr>
+                <td valign="top" style="padding: 0">
+                  <table
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                    style="
+                      width: 100%;
+                      border-collapse: collapse;
+                      table-layout: fixed;
+                    "
+                  >
+                    <tbody>
+                      <tr>
+                        <td
+                          width="195"
+                          valign="top"
+                          style="width: 33.62%; padding: 0"
+                        >
+                          <a
+                            href="https://icoca.ch/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style="display: block; text-decoration: none"
                           >
-                            <a
-                              href="https://icoca.ch/"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style="display: block; text-decoration: none"
-                            >
-                              <img
-                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-icoca.png"
-                                nosend="1"
-                                border="0"
-                                width="195"
-                                height="44"
-                                alt="ICoCA - The Responsible Security Association"
-                                title="ICoCA - The Responsible Security Association"
-                                style="
-                                  display: block;
-                                  width: 100%;
-                                  height: 44px;
-                                  border: 0;
-                                "
-                              />
-                            </a>
-                          </td>
-                          <td
-                            width="4"
-                            style="
-                              width: 0.69%;
-                              padding: 0;
-                              font-size: 1px;
-                              line-height: 1px;
-                            "
+                            <img
+                              src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-icoca.png"
+                              nosend="1"
+                              border="0"
+                              width="195"
+                              height="44"
+                              alt="ICoCA - The Responsible Security Association"
+                              title="ICoCA - The Responsible Security Association"
+                              style="
+                                display: block;
+                                width: 100%;
+                                height: 44px;
+                                border: 0;
+                              "
+                            />
+                          </a>
+                        </td>
+                        <td
+                          width="4"
+                          style="
+                            width: 0.69%;
+                            padding: 0;
+                            font-size: 1px;
+                            line-height: 1px;
+                          "
+                        >
+                          &nbsp;
+                        </td>
+                        <td
+                          width="182"
+                          valign="top"
+                          style="width: 31.38%; padding: 0"
+                        >
+                          <a
+                            href="https://unglobalcompact.org/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style="display: block; text-decoration: none"
                           >
-                            &nbsp;
-                          </td>
-                          <td
-                            width="182"
-                            valign="top"
-                            style="width: 31.38%; padding: 0"
+                            <img
+                              src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-ungc.png"
+                              nosend="1"
+                              border="0"
+                              width="182"
+                              height="44"
+                              alt="United Nations Global Compact"
+                              title="United Nations Global Compact"
+                              style="
+                                display: block;
+                                width: 100%;
+                                height: 44px;
+                                border: 0;
+                              "
+                            />
+                          </a>
+                        </td>
+                        <td
+                          width="4"
+                          style="
+                            width: 0.69%;
+                            padding: 0;
+                            font-size: 1px;
+                            line-height: 1px;
+                          "
+                        >
+                          &nbsp;
+                        </td>
+                        <td
+                          width="195"
+                          valign="top"
+                          style="width: 33.62%; padding: 0"
+                        >
+                          <a
+                            href="https://www.ncsc.gov.uk/cyberessentials/overview"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            style="display: block; text-decoration: none"
                           >
-                            <a
-                              href="https://unglobalcompact.org/"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style="display: block; text-decoration: none"
-                            >
-                              <img
-                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-ungc.png"
-                                nosend="1"
-                                border="0"
-                                width="182"
-                                height="44"
-                                alt="United Nations Global Compact"
-                                title="United Nations Global Compact"
-                                style="
-                                  display: block;
-                                  width: 100%;
-                                  height: 44px;
-                                  border: 0;
-                                "
-                              />
-                            </a>
-                          </td>
-                          <td
-                            width="4"
-                            style="
-                              width: 0.69%;
-                              padding: 0;
-                              font-size: 1px;
-                              line-height: 1px;
-                            "
-                          >
-                            &nbsp;
-                          </td>
-                          <td
-                            width="195"
-                            valign="top"
-                            style="width: 33.62%; padding: 0"
-                          >
-                            <a
-                              href="https://www.ncsc.gov.uk/cyberessentials/overview"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style="display: block; text-decoration: none"
-                            >
-                              <img
-                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-cyber.png"
-                                nosend="1"
-                                border="0"
-                                width="195"
-                                height="44"
-                                alt="Cyber Essentials"
-                                title="Cyber Essentials"
-                                style="
-                                  display: block;
-                                  width: 100%;
-                                  height: 44px;
-                                  border: 0;
-                                "
-                              />
-                            </a>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          `;
-        } else {
-          // Dark layout (matching index.html): Certifications on TOP, Dark MSS banner on BOTTOM
-          bannersContainer.innerHTML = `
-            <table
-              cellpadding="0"
-              cellspacing="0"
-              border="0"
-              style="width: 100%; max-width: 580px; border-collapse: collapse"
-            >
-              <tbody>
-                <tr>
-                  <td valign="top" style="padding: 0 0 4px 0">
-                    <table
-                      cellpadding="0"
-                      cellspacing="0"
-                      border="0"
-                      style="width: 100%; border-collapse: collapse; table-layout: fixed"
-                    >
-                      <tbody>
-                        <tr>
-                          <td width="195" valign="top" style="width: 33.62%; padding: 0">
-                            <a
-                              href="https://icoca.ch/"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style="display: block; text-decoration: none"
-                            >
-                              <img
-                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-icoca.png"
-                                nosend="1"
-                                border="0"
-                                width="195"
-                                height="44"
-                                alt="ICoCA - The Responsible Security Association"
-                                title="ICoCA - The Responsible Security Association"
-                                style="display: block; width: 100%; height: 44px; border: 0"
-                              />
-                            </a>
-                          </td>
-                          <td width="2" style="width: 0.34%; font-size: 1px">&nbsp;</td>
-                          <td width="188" valign="top" style="width: 32.41%; padding: 0">
-                            <a
-                              href="https://unglobalcompact.org/"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style="display: block; text-decoration: none"
-                            >
-                              <img
-                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-ungc.png"
-                                nosend="1"
-                                border="0"
-                                width="188"
-                                height="44"
-                                alt="We Support the UN Global Compact"
-                                title="We Support the UN Global Compact"
-                                style="display: block; width: 100%; height: 44px; border: 0"
-                              />
-                            </a>
-                          </td>
-                          <td width="2" style="width: 0.34%; font-size: 1px">&nbsp;</td>
-                          <td width="193" valign="top" style="width: 33.28%; padding: 0">
-                            <a
-                              href="https://www.ncsc.gov.uk/cyberessentials/overview"
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              style="display: block; text-decoration: none"
-                            >
-                              <img
-                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-cyber.png"
-                                nosend="1"
-                                border="0"
-                                width="193"
-                                height="44"
-                                alt="Cyber Essentials Certified"
-                                title="Cyber Essentials Certified"
-                                style="display: block; width: 100%; height: 44px; border: 0"
-                              />
-                            </a>
-                          </td>
-                        </tr>
-                      </tbody>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td valign="top" style="padding: 0">
-                    <a
-                      href="https://www.mssglobal.com/"
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      style="display: block; text-decoration: none"
-                    >
-                      <img
-                        src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-mss.png"
-                        nosend="1"
-                        border="0"
-                        width="580"
-                        height="44"
-                        alt="MSS Global Certifications"
-                        title="MSS Global Certifications"
-                        style="display: block; width: 100%; max-width: 580px; height: 44px; border: 0"
-                      />
-                    </a>
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          `;
-        }
+                            <img
+                              src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-cyber.png"
+                              nosend="1"
+                              border="0"
+                              width="195"
+                              height="44"
+                              alt="Cyber Essentials"
+                              title="Cyber Essentials"
+                              style="
+                                display: block;
+                                width: 100%;
+                                height: 44px;
+                                border: 0;
+                              "
+                            />
+                          </a>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        `;
       }
 
       function updateSignature() {
         displayFullName.textContent = inputName.value.trim() || "[Full Name]";
         displayJobTitle.textContent = inputTitle.value.trim() || "[Job Title]";
+
+        const selectedLoc = selectLocation.value;
+        const entityData = ENTITIES[selectedLoc] || ENTITIES.uae;
+        displayEntityName.textContent = entityData.entityName;
+        displayEntityAddress.innerHTML = entityData.addressHtml;
 
         const mobileText = inputMobile.value.trim() || "+971 58 218 0369";
         displayMobileLink.textContent = mobileText;
@@ -1287,7 +1208,7 @@
         displayMobileLink.href = waLink;
         displayMobileIconLink.href = waLink;
 
-        const landlineText = inputLandline.value.trim() || "+971 (04) 514 4958";
+        const landlineText = inputLandline.value.trim() || entityData.defaultLandline;
         displayLandlineLink.textContent = landlineText;
         const telLink = sanitizePhoneForTel(landlineText);
         displayLandlineLink.href = telLink;
@@ -1364,7 +1285,20 @@
       inputMobile.addEventListener("input", updateSignature);
       inputLandline.addEventListener("input", updateSignature);
       inputEmail.addEventListener("input", updateSignature);
-      selectBanner.addEventListener("change", updateSignature);
+
+      // Auto-update landline when changing entity/country if blank or previous default
+      selectLocation.addEventListener("change", () => {
+        const newLocation = selectLocation.value;
+        const prevEntity = ENTITIES[previousLocation];
+        const nextEntity = ENTITIES[newLocation];
+
+        if (!inputLandline.value || inputLandline.value.trim() === prevEntity.defaultLandline) {
+          inputLandline.value = nextEntity.defaultLandline;
+        }
+
+        previousLocation = newLocation;
+        updateSignature();
+      });
 
       window.addEventListener("resize", adjustPreviewScaling);
       window.addEventListener("orientationchange", () => setTimeout(adjustPreviewScaling, 150));
@@ -1457,10 +1391,10 @@
       });
 
       // Initial execution
-      renderBanners();
+      updateSignature();
       setTimeout(adjustPreviewScaling, 150);
-      // Double check after fonts/images load
       window.addEventListener("load", adjustPreviewScaling);
+
     </script>
   </body>
 </html>
