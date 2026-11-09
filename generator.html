@@ -1,0 +1,1466 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=5.0"
+    />
+    <title>IDG Security - Email Signature Generator</title>
+    <style>
+      :root {
+        --idg-navy: #003057;
+        --idg-light-navy: #0a4878;
+        --idg-bg: #f8fafc;
+        --idg-card: #ffffff;
+        --idg-border: #cbd5e1;
+        --idg-text: #0f172a;
+        --idg-muted: #64748b;
+        --idg-green: #15803d;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      html {
+        width: 100%;
+        overflow-x: hidden;
+      }
+      body {
+        margin: 0;
+        padding: 0;
+        width: 100%;
+        overflow-x: hidden;
+        background-color: var(--idg-bg);
+        color: var(--idg-text);
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        -webkit-font-smoothing: antialiased;
+      }
+      .page-wrapper {
+        width: 100%;
+        max-width: 1040px;
+        margin: 0 auto;
+        padding: 14px 10px 40px 10px;
+      }
+      @media (min-width: 768px) {
+        .page-wrapper {
+          padding: 24px 20px 48px 20px;
+        }
+      }
+      header {
+        text-align: center;
+        margin-bottom: 18px;
+      }
+      header h1 {
+        color: var(--idg-navy);
+        margin: 0 0 6px 0;
+        font-size: 20px;
+        font-weight: 700;
+        letter-spacing: -0.3px;
+      }
+      @media (min-width: 768px) {
+        header h1 {
+          font-size: 25px;
+        }
+      }
+      header p {
+        margin: 0;
+        color: var(--idg-muted);
+        font-size: 13px;
+      }
+
+      /* LAYOUT GRID: minmax(0, 1fr) is critical to prevent CSS grid blow-out */
+      .layout-grid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 16px;
+        width: 100%;
+      }
+      @media (min-width: 920px) {
+        .layout-grid {
+          grid-template-columns: 380px minmax(0, 1fr);
+          align-items: start;
+          gap: 22px;
+        }
+      }
+
+      /* CARDS */
+      .card {
+        background: var(--idg-card);
+        border: 1px solid var(--idg-border);
+        border-radius: 12px;
+        padding: 16px;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        width: 100%;
+        min-width: 0; /* Prevents card from expanding past screen */
+        overflow: hidden;
+      }
+      @media (min-width: 768px) {
+        .card {
+          padding: 20px;
+        }
+      }
+      .card-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 14px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #f1f5f9;
+        gap: 10px;
+      }
+      .card-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: var(--idg-navy);
+        margin: 0;
+      }
+
+      /* FORM INPUTS */
+      .form-group {
+        margin-bottom: 12px;
+      }
+      label {
+        display: block;
+        font-size: 12px;
+        font-weight: 600;
+        color: #334155;
+        margin-bottom: 4px;
+      }
+      input[type="text"],
+      input[type="email"],
+      select {
+        width: 100%;
+        min-height: 44px;
+        padding: 10px 12px;
+        font-size: 16px; /* Prevents iOS auto-zoom */
+        border: 1px solid var(--idg-border);
+        border-radius: 8px;
+        color: #0f172a;
+        background: #ffffff;
+        transition: border-color 0.15s ease, box-shadow 0.15s ease;
+      }
+      @media (min-width: 768px) {
+        input[type="text"],
+        input[type="email"],
+        select {
+          font-size: 13.5px;
+          min-height: 40px;
+          padding: 8px 12px;
+        }
+      }
+      input:focus,
+      select:focus {
+        outline: none;
+        border-color: var(--idg-navy);
+        box-shadow: 0 0 0 3px rgba(0, 48, 87, 0.12);
+      }
+
+      /* BUTTONS */
+      .actions {
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+      }
+      .btn-icon {
+        flex-shrink: 0;
+        display: inline-block;
+        vertical-align: middle;
+      }
+      .btn {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        min-height: 46px;
+        padding: 10px 16px;
+        font-size: 14px;
+        font-weight: 600;
+        border-radius: 8px;
+        border: none;
+        cursor: pointer;
+        transition: background 0.15s ease, transform 0.1s ease;
+        text-align: center;
+        width: 100%;
+        word-break: break-word;
+      }
+      .btn:active {
+        transform: scale(0.98);
+      }
+      .btn-primary {
+        background: var(--idg-navy);
+        color: #ffffff;
+      }
+      .btn-primary:hover {
+        background: var(--idg-light-navy);
+      }
+      .btn-secondary {
+        background: #f1f5f9;
+        color: #334155;
+        border: 1px solid #cbd5e1;
+      }
+      .btn-secondary:hover {
+        background: #e2e8f0;
+      }
+
+      /* PREVIEW CONTROLS */
+      .preview-controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        flex-shrink: 0;
+      }
+      .toggle-btn {
+        background: #f1f5f9;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        font-size: 11.5px;
+        font-weight: 600;
+        color: #475569;
+        padding: 5px 9px;
+        cursor: pointer;
+        min-height: 30px;
+        white-space: nowrap;
+      }
+      .toggle-btn.active {
+        background: var(--idg-navy);
+        color: #ffffff;
+        border-color: var(--idg-navy);
+      }
+
+      /* PREVIEW CONTAINER */
+      .preview-box {
+        background: #ffffff;
+        border: 1px dashed #cbd5e1;
+        border-radius: 8px;
+        padding: 10px;
+        width: 100%;
+        min-width: 0;
+        overflow: hidden;
+      }
+      .preview-viewport {
+        width: 100%;
+        min-width: 0;
+        position: relative;
+        overflow: hidden;
+      }
+      .preview-scaler {
+        transform-origin: top left;
+        width: 580px; /* Fixed signature target width */
+      }
+      #signaturePreview {
+        width: 580px;
+      }
+
+      /* INSTRUCTIONS CALLOUT */
+      .instructions {
+        margin-top: 16px;
+        background: #f0f7ff;
+        border-left: 4px solid var(--idg-navy);
+        padding: 12px 14px;
+        border-radius: 6px;
+        font-size: 12.5px;
+        line-height: 1.45;
+        color: #1e3a8a;
+        width: 100%;
+        min-width: 0;
+      }
+      .instructions-header {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        font-size: 13px;
+        font-weight: 700;
+        color: var(--idg-navy);
+        margin-bottom: 8px;
+      }
+      .instructions-header svg {
+        flex-shrink: 0;
+        color: var(--idg-navy);
+      }
+      .instructions ol {
+        margin: 0;
+        padding-left: 18px;
+      }
+      .instructions li {
+        margin-bottom: 5px;
+        word-break: break-word;
+      }
+      .instructions li:last-child {
+        margin-bottom: 0;
+      }
+      .instructions-note {
+        margin-top: 8px;
+        padding-top: 7px;
+        border-top: 1px dashed rgba(30, 58, 138, 0.2);
+        font-size: 11.5px;
+        color: #1e40af;
+        line-height: 1.35;
+      }
+
+      /* TOAST NOTIFICATION */
+      .toast {
+        position: fixed;
+        bottom: 16px;
+        left: 16px;
+        right: 16px;
+        max-width: 420px;
+        margin: 0 auto;
+        background: var(--idg-green);
+        color: white;
+        padding: 12px 18px;
+        border-radius: 8px;
+        font-size: 13.5px;
+        font-weight: 600;
+        box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+        display: none;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        z-index: 1000;
+        animation: toastIn 0.2s ease-out;
+        text-align: center;
+      }
+      @keyframes toastIn {
+        from {
+          transform: translateY(20px);
+          opacity: 0;
+        }
+        to {
+          transform: translateY(0);
+          opacity: 1;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page-wrapper">
+      <header>
+        <h1>IDG Security Signature Generator</h1>
+        <p>Generate, customize, and copy official email signatures</p>
+      </header>
+
+      <div class="layout-grid">
+        <!-- FORM PANEL -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Employee Details</h2>
+          </div>
+
+          <div class="form-group">
+            <label for="fullName">Full Name</label>
+            <input
+              type="text"
+              id="fullName"
+              value="Donnica Yagao"
+              placeholder="e.g. John Doe"
+              autocomplete="name"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="jobTitle">Job Title</label>
+            <input
+              type="text"
+              id="jobTitle"
+              value="IT Manager"
+              placeholder="e.g. Security Specialist"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="mobile">Mobile / WhatsApp Number</label>
+            <input
+              type="text"
+              id="mobile"
+              value="+971 58 218 0369"
+              placeholder="e.g. +971 50 123 4567"
+              autocomplete="tel"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="landline">Landline (Office Phone)</label>
+            <input
+              type="text"
+              id="landline"
+              value="+971 (04) 514 4958"
+              placeholder="e.g. +971 (04) 514 4958"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="email">IDG Email Address</label>
+            <input
+              type="email"
+              id="email"
+              value="donnica.yagao@idg-security.com"
+              placeholder="e.g. name@idg-security.com"
+              autocomplete="email"
+            />
+          </div>
+
+          <div class="form-group">
+            <label for="bannerTheme">Banner Style</label>
+            <select id="bannerTheme">
+              <option value="dark">Dark MSS Banner (Standard)</option>
+              <option value="white">White MSS Banner (On Top)</option>
+            </select>
+          </div>
+
+          <div class="actions">
+            <button class="btn btn-primary" id="btnCopySignature">
+              <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
+                <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
+              </svg>
+              <span>Copy Signature to Clipboard</span>
+            </button>
+            <button class="btn btn-secondary" id="btnCopyCode">
+              <svg class="btn-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <polyline points="16 18 22 12 16 6"></polyline>
+                <polyline points="8 6 2 12 8 18"></polyline>
+              </svg>
+              <span>Copy Raw HTML Code</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- PREVIEW PANEL -->
+        <div class="card">
+          <div class="card-header">
+            <h2 class="card-title">Live Preview</h2>
+            <div class="preview-controls">
+              <button
+                class="toggle-btn active"
+                id="btnFitScreen"
+                title="Scale signature to fit screen width"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 3px;" aria-hidden="true">
+                  <polyline points="4 14 10 14 10 20"></polyline>
+                  <polyline points="20 10 14 10 14 4"></polyline>
+                  <line x1="14" y1="10" x2="21" y2="3"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                <span>Fit Screen</span>
+              </button>
+              <button
+                class="toggle-btn"
+                id="btnActualSize"
+                title="View signature at 100% desktop size"
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -1px; margin-right: 3px;" aria-hidden="true">
+                  <polyline points="15 3 21 3 21 9"></polyline>
+                  <polyline points="9 21 3 21 3 15"></polyline>
+                  <line x1="21" y1="3" x2="14" y2="10"></line>
+                  <line x1="3" y1="21" x2="10" y2="14"></line>
+                </svg>
+                <span>100% Size</span>
+              </button>
+            </div>
+          </div>
+
+          <div class="preview-box">
+            <div class="preview-viewport" id="previewViewport">
+              <div class="preview-scaler" id="previewScaler">
+                <div id="signaturePreview">
+                  <!-- SIGNATURE BLOCK CONTENT (STRICT CORPORATE 580PX TABLE) -->
+                  <table
+                    role="presentation"
+                    cellpadding="0"
+                    cellspacing="0"
+                    border="0"
+                    style="
+                      border-collapse: collapse;
+                      font-family: Helvetica, Arial, sans-serif;
+                      color: #003057;
+                      width: 580px;
+                      max-width: 580px;
+                    "
+                  >
+                    <tbody>
+                      <!-- ROW 1: EMPLOYEE NAME & TITLE HEADER (Full width, fits any length) -->
+                      <tr>
+                        <td style="padding: 0 0 12px 0">
+                          <div
+                            id="displayFullName"
+                            style="
+                              font-family: Helvetica, Arial, sans-serif;
+                              font-size: 14px;
+                              line-height: 18px;
+                              font-weight: bold;
+                              color: #003057;
+                              letter-spacing: 0.2px;
+                              margin: 0;
+                            "
+                          >
+                            Donnica Yagao
+                          </div>
+                          <div
+                            id="displayJobTitle"
+                            style="
+                              font-family: Helvetica, Arial, sans-serif;
+                              font-size: 12px;
+                              line-height: 16px;
+                              font-weight: bold;
+                              color: #003057;
+                              letter-spacing: 0.2px;
+                              margin: 2px 0 0 0;
+                            "
+                          >
+                            IT Manager
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- ROW 2: IDG LOGO & CONTACT INFO SIDE-BY-SIDE -->
+                      <tr>
+                        <td style="padding: 0 0 10px 0">
+                          <table
+                            cellpadding="0"
+                            cellspacing="0"
+                            border="0"
+                            style="width: 100%; border-collapse: collapse"
+                          >
+                            <tbody>
+                              <tr>
+                                <!-- LEFT COLUMN: IDG Logo (98px) -->
+                                <td
+                                  valign="top"
+                                  align="left"
+                                  style="width: 98px; padding: 0 16px 0 0"
+                                >
+                                  <a
+                                    href="https://idg-security.com/"
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    style="text-decoration: none; display: inline-block"
+                                  >
+                                    <img
+                                      src="https://raw.githubusercontent.com/idg-it/Email/main/assets/idg-logo.png"
+                                      nosend="1"
+                                      border="0"
+                                      width="98"
+                                      height="90"
+                                      alt="IDG Security"
+                                      title="IDG Security"
+                                      style="
+                                        display: block;
+                                        width: 98px;
+                                        height: 90px;
+                                        border: 0;
+                                      "
+                                    />
+                                  </a>
+                                </td>
+
+                                <!-- RIGHT COLUMN: IDG Office & Contact Details -->
+                                <td valign="top" style="padding: 0">
+                                  <table
+                                    cellpadding="0"
+                                    cellspacing="0"
+                                    border="0"
+                                    style="width: 100%; border-collapse: collapse"
+                                  >
+                                    <tbody>
+                                      <tr>
+                                        <td
+                                          style="
+                                            width: 20px;
+                                            padding: 0 0 4px 0;
+                                            font-size: 1px;
+                                            line-height: 1px;
+                                          "
+                                        >
+                                          &nbsp;
+                                        </td>
+                                        <td
+                                          valign="top"
+                                          style="
+                                            font-family: Helvetica, Arial, sans-serif;
+                                            font-size: 13.5px;
+                                            line-height: 16px;
+                                            font-weight: bold;
+                                            color: #003057;
+                                            letter-spacing: 0.4px;
+                                            padding: 0 0 4px 0;
+                                          "
+                                        >
+                                          IDG Group DMCC
+                                        </td>
+                                      </tr>
+                                      <tr>
+                                        <td
+                                          valign="top"
+                                          style="width: 20px; padding: 1px 2px 4px 0"
+                                        >
+                                          <img
+                                            src="https://raw.githubusercontent.com/idg-it/Email/main/assets/icon-location.png"
+                                            nosend="1"
+                                            border="0"
+                                            width="14"
+                                            height="15"
+                                            alt="Location"
+                                            style="
+                                              display: block;
+                                              width: 14px;
+                                              height: 15px;
+                                              border: 0;
+                                            "
+                                          />
+                                        </td>
+                                        <td
+                                          valign="top"
+                                          style="
+                                            font-family: Helvetica, Arial, sans-serif;
+                                            font-size: 11px;
+                                            line-height: 15px;
+                                            color: #003057;
+                                            padding: 0 0 4px 0;
+                                          "
+                                        >
+                                          <span style="color: #003057; text-decoration: none"
+                                            >Unit 15&#8203;01, The Do&#8203;me Tow&#8203;er,
+                                            Clu&#8203;ster N, Jum&#8203;eirah La&#8203;ke
+                                            Tow&#8203;ers<br />
+                                            Du&#8203;bai, Uni&#8203;ted Ar&#8203;ab
+                                            Emi&#8203;rates</span
+                                          >
+                                        </td>
+                                      </tr>
+
+                                      <tr>
+                                        <td colspan="2" style="padding: 0 0 4px 0">
+                                          <table
+                                            cellpadding="0"
+                                            cellspacing="0"
+                                            border="0"
+                                            style="border-collapse: collapse"
+                                          >
+                                            <tbody>
+                                              <tr>
+                                                <td
+                                                  valign="middle"
+                                                  style="width: 20px; padding: 0 2px 4px 0"
+                                                >
+                                                  <a
+                                                    id="displayLandlineIconLink"
+                                                    href="tel:+97145144958"
+                                                    style="text-decoration: none; border: 0"
+                                                    ><img
+                                                      src="https://raw.githubusercontent.com/idg-it/Email/main/assets/icon-phone.png"
+                                                      nosend="1"
+                                                      border="0"
+                                                      width="13"
+                                                      height="13"
+                                                      alt="Phone"
+                                                      style="
+                                                        display: block;
+                                                        width: 13px;
+                                                        height: 13px;
+                                                        border: 0;
+                                                      "
+                                                  /></a>
+                                                </td>
+                                                <td
+                                                  valign="middle"
+                                                  style="
+                                                    font-family: Helvetica, Arial, sans-serif;
+                                                    font-size: 11px;
+                                                    line-height: 15px;
+                                                    color: #003057;
+                                                    padding: 0 16px 4px 0;
+                                                    white-space: nowrap;
+                                                  "
+                                                >
+                                                  <a
+                                                    id="displayLandlineLink"
+                                                    href="tel:+97145144958"
+                                                    style="color: #003057; text-decoration: none"
+                                                    >+971 (04) 514 4958</a
+                                                  >
+                                                </td>
+                                                <td
+                                                  valign="middle"
+                                                  style="width: 20px; padding: 0 2px 4px 0"
+                                                >
+                                                  <a
+                                                    id="displayMobileIconLink"
+                                                    href="https://wa.me/971582180369"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style="text-decoration: none; border: 0"
+                                                    ><img
+                                                      src="https://raw.githubusercontent.com/idg-it/Email/main/assets/icon-mobile.png"
+                                                      nosend="1"
+                                                      border="0"
+                                                      width="13"
+                                                      height="14"
+                                                      alt="WhatsApp"
+                                                      title="WhatsApp"
+                                                      style="
+                                                        display: block;
+                                                        width: 13px;
+                                                        height: 14px;
+                                                        border: 0;
+                                                      "
+                                                  /></a>
+                                                </td>
+                                                <td
+                                                  valign="middle"
+                                                  style="
+                                                    font-family: Helvetica, Arial, sans-serif;
+                                                    font-size: 11px;
+                                                    line-height: 15px;
+                                                    color: #003057;
+                                                    padding: 0 0 4px 0;
+                                                    white-space: nowrap;
+                                                  "
+                                                >
+                                                  <a
+                                                    id="displayMobileLink"
+                                                    href="https://wa.me/971582180369"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style="color: #003057; text-decoration: none"
+                                                    >+971 58 218 0369</a
+                                                  >
+                                                </td>
+                                              </tr>
+                                              <tr>
+                                                <td
+                                                  valign="middle"
+                                                  style="width: 20px; padding: 0 2px 0 0"
+                                                >
+                                                  <img
+                                                    src="https://raw.githubusercontent.com/idg-it/Email/main/assets/icon-email.png"
+                                                    nosend="1"
+                                                    border="0"
+                                                    width="13"
+                                                    height="10"
+                                                    alt="Email"
+                                                    style="
+                                                      display: block;
+                                                      width: 13px;
+                                                      height: 10px;
+                                                      border: 0;
+                                                    "
+                                                  />
+                                                </td>
+                                                <td
+                                                  valign="middle"
+                                                  style="
+                                                    font-family: Helvetica, Arial, sans-serif;
+                                                    font-size: 11px;
+                                                    line-height: 15px;
+                                                    color: #003057;
+                                                    padding: 0 16px 0 0;
+                                                    white-space: nowrap;
+                                                  "
+                                                >
+                                                  <a
+                                                    id="displayEmailLink"
+                                                    href="mailto:donnica.yagao@idg-security.com"
+                                                    style="color: #003057; text-decoration: none"
+                                                    >donnica.yagao@idg-security.com</a
+                                                  >
+                                                </td>
+                                                <td
+                                                  valign="middle"
+                                                  style="width: 20px; padding: 0 2px 0 0"
+                                                >
+                                                  <a
+                                                    href="https://www.linkedin.com/company/idg-security/"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style="text-decoration: none; border: 0"
+                                                    ><img
+                                                      src="https://raw.githubusercontent.com/idg-it/Email/main/assets/icon-linkedin.png"
+                                                      nosend="1"
+                                                      border="0"
+                                                      width="14"
+                                                      height="13"
+                                                      alt="LinkedIn"
+                                                      title="LinkedIn"
+                                                      style="
+                                                        display: block;
+                                                        width: 14px;
+                                                        height: 13px;
+                                                        border: 0;
+                                                      "
+                                                  /></a>
+                                                </td>
+                                                <td
+                                                  valign="middle"
+                                                  style="
+                                                    font-family: Helvetica, Arial, sans-serif;
+                                                    font-size: 11px;
+                                                    line-height: 15px;
+                                                    color: #003057;
+                                                    padding: 0;
+                                                    white-space: nowrap;
+                                                  "
+                                                >
+                                                  <a
+                                                    href="https://www.linkedin.com/company/idg-security/"
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    style="color: #003057; text-decoration: none"
+                                                    >IDG Security</a
+                                                  >
+                                                </td>
+                                              </tr>
+                                            </tbody>
+                                          </table>
+                                        </td>
+                                      </tr>
+
+                                      <tr>
+                                        <td
+                                          valign="middle"
+                                          style="width: 20px; padding: 0 2px 0 0"
+                                        >
+                                          <img
+                                            src="https://raw.githubusercontent.com/idg-it/Email/main/assets/icon-web.png"
+                                            nosend="1"
+                                            border="0"
+                                            width="13"
+                                            height="13"
+                                            alt="Web"
+                                            style="
+                                              display: block;
+                                              width: 13px;
+                                              height: 13px;
+                                              border: 0;
+                                            "
+                                          />
+                                        </td>
+                                        <td
+                                          valign="middle"
+                                          style="
+                                            font-family: Helvetica, Arial, sans-serif;
+                                            font-size: 11px;
+                                            line-height: 15px;
+                                            color: #003057;
+                                            padding: 0;
+                                          "
+                                        >
+                                          <a
+                                            href="https://idg-security.com/"
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            style="color: #003057; text-decoration: none"
+                                            >www.idg-security.com</a
+                                          >
+                                        </td>
+                                      </tr>
+                                    </tbody>
+                                  </table>
+                                </td>
+                              </tr>
+                            </tbody>
+                          </table>
+                        </td>
+                      </tr>
+
+                      <!-- DISCLAIMERS -->
+                      <tr>
+                        <td style="padding: 3px 0 5px 0">
+                          <div
+                            style="
+                              font-family: Helvetica, Arial, sans-serif;
+                              font-size: 10.5px;
+                              line-height: 1.4;
+                              font-weight: normal;
+                              font-style: italic;
+                              color: #003057;
+                              margin: 0 0 3px 0;
+                            "
+                          >
+                            An ISO 9001:2015 Certified Company
+                          </div>
+                          <div
+                            align="justify"
+                            style="
+                              font-family: Helvetica, Arial, sans-serif;
+                              font-size: 9.5px;
+                              line-height: 1.4;
+                              color: #475569;
+                              text-align: justify;
+                              margin: 0 0 3px 0;
+                            "
+                          >
+                            This email is intended only for the named recipient(s) above and
+                            may contain information that is privileged, confidential and/or
+                            exempt from disclosure under applicable law. If you have received
+                            this message in error, or are not the named recipient(s), please
+                            immediately notify the sender and permanently delete this email
+                            message and any attachments, without retaining a copy.
+                          </div>
+                          <div
+                            style="
+                              font-family: Helvetica, Arial, sans-serif;
+                              font-size: 9.5px;
+                              line-height: 1.4;
+                              font-weight: normal;
+                              color: #15803d;
+                              margin: 0;
+                            "
+                          >
+                            Please consider the environment before printing this email.
+                          </div>
+                        </td>
+                      </tr>
+
+                      <!-- CERTIFICATION BANNERS -->
+                      <tr>
+                        <td style="padding: 0" id="bannersContainer">
+                          <!-- RENDERED BY JS -->
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="instructions">
+            <div class="instructions-header">
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>How to Add to Apple Mail:</span>
+            </div>
+            <ol>
+              <li>Fill in details and click <strong>"Copy Signature to Clipboard"</strong>.</li>
+              <li>In Apple Mail, open <strong>Settings &gt; Signatures</strong> and click <strong>+</strong>.</li>
+              <li>Select all (<strong>Cmd + A</strong>), delete default text, and paste (<strong>Cmd + V</strong>).</li>
+              <li><strong>Uncheck</strong> <em>"Always match my default message font"</em> at the bottom.</li>
+            </ol>
+            <div class="instructions-note">
+              <em>Note: Images show as blank boxes in Settings, but load properly in new emails.</em>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div class="toast" id="toast">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <polyline points="20 6 9 17 4 12"></polyline>
+      </svg>
+      <span id="toastMsg">Signature copied to clipboard!</span>
+    </div>
+
+    <script>
+      const inputName = document.getElementById("fullName");
+      const inputTitle = document.getElementById("jobTitle");
+      const inputMobile = document.getElementById("mobile");
+      const inputLandline = document.getElementById("landline");
+      const inputEmail = document.getElementById("email");
+      const selectBanner = document.getElementById("bannerTheme");
+
+      const displayFullName = document.getElementById("displayFullName");
+      const displayJobTitle = document.getElementById("displayJobTitle");
+      const displayMobileLink = document.getElementById("displayMobileLink");
+      const displayMobileIconLink = document.getElementById("displayMobileIconLink");
+      const displayLandlineLink = document.getElementById("displayLandlineLink");
+      const displayLandlineIconLink = document.getElementById("displayLandlineIconLink");
+      const displayEmailLink = document.getElementById("displayEmailLink");
+      const bannersContainer = document.getElementById("bannersContainer");
+
+      const previewBox = document.querySelector(".preview-box");
+      const previewViewport = document.getElementById("previewViewport");
+      const previewScaler = document.getElementById("previewScaler");
+      const signaturePreview = document.getElementById("signaturePreview");
+      const btnFitScreen = document.getElementById("btnFitScreen");
+      const btnActualSize = document.getElementById("btnActualSize");
+
+      let autoFitEnabled = true;
+
+      function sanitizePhoneForWhatsApp(phone) {
+        let digits = phone.replace(/[^0-9]/g, "");
+        if (!digits) return "https://wa.me/";
+        // Strip international prefix '00' if entered (e.g. 00971 -> 971)
+        if (digits.startsWith("00")) {
+          digits = digits.substring(2);
+        }
+        // Auto-convert local UAE mobile format (e.g. 058xxxxxxx -> 97158xxxxxxx)
+        if (digits.startsWith("05") && digits.length === 10) {
+          digits = "971" + digits.substring(1);
+        }
+        return "https://wa.me/" + digits;
+      }
+
+      function sanitizePhoneForTel(phone) {
+        const cleaned = phone.replace(/[\s()-]/g, "");
+        return "tel:" + cleaned;
+      }
+
+      function renderBanners() {
+        if (selectBanner.value === "white") {
+          // White layout (matching white.html): White MSS banner on TOP, Certifications on BOTTOM
+          bannersContainer.innerHTML = `
+            <table
+              cellpadding="0"
+              cellspacing="0"
+              border="0"
+              style="width: 100%; max-width: 580px; border-collapse: collapse"
+            >
+              <tbody>
+                <tr>
+                  <td valign="top" style="padding: 0 0 4px 0">
+                    <a
+                      href="https://www.mssglobal.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style="display: block; text-decoration: none"
+                    >
+                      <img
+                        src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-mss-white.png"
+                        nosend="1"
+                        border="0"
+                        width="580"
+                        height="44"
+                        alt="MSS Global Certifications"
+                        title="MSS Global Certifications"
+                        style="
+                          display: block;
+                          width: 100%;
+                          height: 44px;
+                          border: 0;
+                        "
+                      />
+                    </a>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top" style="padding: 0">
+                    <table
+                      cellpadding="0"
+                      cellspacing="0"
+                      border="0"
+                      style="
+                        width: 100%;
+                        border-collapse: collapse;
+                        table-layout: fixed;
+                      "
+                    >
+                      <tbody>
+                        <tr>
+                          <td
+                            width="195"
+                            valign="top"
+                            style="width: 33.62%; padding: 0"
+                          >
+                            <a
+                              href="https://icoca.ch/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style="display: block; text-decoration: none"
+                            >
+                              <img
+                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-icoca.png"
+                                nosend="1"
+                                border="0"
+                                width="195"
+                                height="44"
+                                alt="ICoCA - The Responsible Security Association"
+                                title="ICoCA - The Responsible Security Association"
+                                style="
+                                  display: block;
+                                  width: 100%;
+                                  height: 44px;
+                                  border: 0;
+                                "
+                              />
+                            </a>
+                          </td>
+                          <td
+                            width="4"
+                            style="
+                              width: 0.69%;
+                              padding: 0;
+                              font-size: 1px;
+                              line-height: 1px;
+                            "
+                          >
+                            &nbsp;
+                          </td>
+                          <td
+                            width="182"
+                            valign="top"
+                            style="width: 31.38%; padding: 0"
+                          >
+                            <a
+                              href="https://unglobalcompact.org/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style="display: block; text-decoration: none"
+                            >
+                              <img
+                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-ungc.png"
+                                nosend="1"
+                                border="0"
+                                width="182"
+                                height="44"
+                                alt="United Nations Global Compact"
+                                title="United Nations Global Compact"
+                                style="
+                                  display: block;
+                                  width: 100%;
+                                  height: 44px;
+                                  border: 0;
+                                "
+                              />
+                            </a>
+                          </td>
+                          <td
+                            width="4"
+                            style="
+                              width: 0.69%;
+                              padding: 0;
+                              font-size: 1px;
+                              line-height: 1px;
+                            "
+                          >
+                            &nbsp;
+                          </td>
+                          <td
+                            width="195"
+                            valign="top"
+                            style="width: 33.62%; padding: 0"
+                          >
+                            <a
+                              href="https://www.ncsc.gov.uk/cyberessentials/overview"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style="display: block; text-decoration: none"
+                            >
+                              <img
+                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-cyber.png"
+                                nosend="1"
+                                border="0"
+                                width="195"
+                                height="44"
+                                alt="Cyber Essentials"
+                                title="Cyber Essentials"
+                                style="
+                                  display: block;
+                                  width: 100%;
+                                  height: 44px;
+                                  border: 0;
+                                "
+                              />
+                            </a>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          `;
+        } else {
+          // Dark layout (matching index.html): Certifications on TOP, Dark MSS banner on BOTTOM
+          bannersContainer.innerHTML = `
+            <table
+              cellpadding="0"
+              cellspacing="0"
+              border="0"
+              style="width: 100%; max-width: 580px; border-collapse: collapse"
+            >
+              <tbody>
+                <tr>
+                  <td valign="top" style="padding: 0 0 4px 0">
+                    <table
+                      cellpadding="0"
+                      cellspacing="0"
+                      border="0"
+                      style="width: 100%; border-collapse: collapse; table-layout: fixed"
+                    >
+                      <tbody>
+                        <tr>
+                          <td width="195" valign="top" style="width: 33.62%; padding: 0">
+                            <a
+                              href="https://icoca.ch/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style="display: block; text-decoration: none"
+                            >
+                              <img
+                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-icoca.png"
+                                nosend="1"
+                                border="0"
+                                width="195"
+                                height="44"
+                                alt="ICoCA - The Responsible Security Association"
+                                title="ICoCA - The Responsible Security Association"
+                                style="display: block; width: 100%; height: 44px; border: 0"
+                              />
+                            </a>
+                          </td>
+                          <td width="2" style="width: 0.34%; font-size: 1px">&nbsp;</td>
+                          <td width="188" valign="top" style="width: 32.41%; padding: 0">
+                            <a
+                              href="https://unglobalcompact.org/"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style="display: block; text-decoration: none"
+                            >
+                              <img
+                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-ungc.png"
+                                nosend="1"
+                                border="0"
+                                width="188"
+                                height="44"
+                                alt="We Support the UN Global Compact"
+                                title="We Support the UN Global Compact"
+                                style="display: block; width: 100%; height: 44px; border: 0"
+                              />
+                            </a>
+                          </td>
+                          <td width="2" style="width: 0.34%; font-size: 1px">&nbsp;</td>
+                          <td width="193" valign="top" style="width: 33.28%; padding: 0">
+                            <a
+                              href="https://www.ncsc.gov.uk/cyberessentials/overview"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style="display: block; text-decoration: none"
+                            >
+                              <img
+                                src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-cyber.png"
+                                nosend="1"
+                                border="0"
+                                width="193"
+                                height="44"
+                                alt="Cyber Essentials Certified"
+                                title="Cyber Essentials Certified"
+                                style="display: block; width: 100%; height: 44px; border: 0"
+                              />
+                            </a>
+                          </td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+                <tr>
+                  <td valign="top" style="padding: 0">
+                    <a
+                      href="https://www.mssglobal.com/"
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      style="display: block; text-decoration: none"
+                    >
+                      <img
+                        src="https://raw.githubusercontent.com/idg-it/Email/main/assets/banner-mss.png"
+                        nosend="1"
+                        border="0"
+                        width="580"
+                        height="44"
+                        alt="MSS Global Certifications"
+                        title="MSS Global Certifications"
+                        style="display: block; width: 100%; max-width: 580px; height: 44px; border: 0"
+                      />
+                    </a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          `;
+        }
+      }
+
+      function updateSignature() {
+        displayFullName.textContent = inputName.value.trim() || "[Full Name]";
+        displayJobTitle.textContent = inputTitle.value.trim() || "[Job Title]";
+
+        const mobileText = inputMobile.value.trim() || "+971 58 218 0369";
+        displayMobileLink.textContent = mobileText;
+        const waLink = sanitizePhoneForWhatsApp(mobileText);
+        displayMobileLink.href = waLink;
+        displayMobileIconLink.href = waLink;
+
+        const landlineText = inputLandline.value.trim() || "+971 (04) 514 4958";
+        displayLandlineLink.textContent = landlineText;
+        const telLink = sanitizePhoneForTel(landlineText);
+        displayLandlineLink.href = telLink;
+        displayLandlineIconLink.href = telLink;
+
+        const emailText = inputEmail.value.trim() || "donnica.yagao@idg-security.com";
+        displayEmailLink.textContent = emailText;
+        displayEmailLink.href = "mailto:" + emailText;
+
+        renderBanners();
+        adjustPreviewScaling();
+      }
+
+      // Responsive preview scaling calculation
+      function adjustPreviewScaling() {
+        if (!previewBox || !previewViewport || !previewScaler || !signaturePreview) return;
+        
+        // Use clientWidth of the outer preview-box (excluding padding)
+        const boxStyles = window.getComputedStyle(previewBox);
+        const paddingLeft = parseFloat(boxStyles.paddingLeft) || 10;
+        const paddingRight = parseFloat(boxStyles.paddingRight) || 10;
+        const availableWidth = previewBox.clientWidth - (paddingLeft + paddingRight);
+        const targetWidth = 580; // Standard email signature table width
+
+        if (autoFitEnabled) {
+          // Always reset horizontal scroll so returning to Fit Screen never displays shifted/cut-off content
+          previewViewport.scrollLeft = 0;
+          previewViewport.scrollTop = 0;
+          previewBox.scrollLeft = 0;
+
+          if (availableWidth < targetWidth && availableWidth > 0) {
+            const scale = availableWidth / targetWidth;
+            previewScaler.style.transform = `scale(${scale})`;
+            previewScaler.style.transformOrigin = "top left";
+            previewScaler.style.width = `${targetWidth}px`;
+            
+            const unscaledHeight = signaturePreview.offsetHeight || 380;
+            const scaledHeight = Math.ceil(unscaledHeight * scale);
+            previewViewport.style.height = `${scaledHeight}px`;
+            previewViewport.style.overflow = "hidden";
+          } else {
+            previewScaler.style.transform = "none";
+            previewScaler.style.width = "580px";
+            previewViewport.style.height = "auto";
+            previewViewport.style.overflow = "hidden";
+          }
+        } else {
+          previewScaler.style.transform = "none";
+          previewScaler.style.width = "580px";
+          previewViewport.style.height = "auto";
+          previewViewport.style.overflowX = "auto";
+        }
+      }
+
+      btnFitScreen.addEventListener("click", () => {
+        autoFitEnabled = true;
+        btnFitScreen.classList.add("active");
+        btnActualSize.classList.remove("active");
+        previewViewport.scrollLeft = 0;
+        previewViewport.scrollTop = 0;
+        previewBox.scrollLeft = 0;
+        adjustPreviewScaling();
+      });
+
+      btnActualSize.addEventListener("click", () => {
+        autoFitEnabled = false;
+        btnActualSize.classList.add("active");
+        btnFitScreen.classList.remove("active");
+        adjustPreviewScaling();
+      });
+
+      inputName.addEventListener("input", updateSignature);
+      inputTitle.addEventListener("input", updateSignature);
+      inputMobile.addEventListener("input", updateSignature);
+      inputLandline.addEventListener("input", updateSignature);
+      inputEmail.addEventListener("input", updateSignature);
+      selectBanner.addEventListener("change", updateSignature);
+
+      window.addEventListener("resize", adjustPreviewScaling);
+      window.addEventListener("orientationchange", () => setTimeout(adjustPreviewScaling, 150));
+      
+      // ResizeObserver automatically detects container width changes (e.g. keyboard open/close, view toggle)
+      if (window.ResizeObserver && previewBox) {
+        new ResizeObserver(() => {
+          adjustPreviewScaling();
+        }).observe(previewBox);
+      }
+
+      function showToast(msg) {
+        const toast = document.getElementById("toast");
+        const toastMsg = document.getElementById("toastMsg");
+        toastMsg.textContent = msg;
+        toast.style.display = "flex";
+        setTimeout(() => {
+          toast.style.display = "none";
+        }, 3200);
+      }
+
+      // Copy Formatted Signature (Rich HTML)
+      document.getElementById("btnCopySignature").addEventListener("click", async () => {
+        const preview = document.getElementById("signaturePreview");
+        const scaler = document.getElementById("previewScaler");
+
+        // Temporarily reset transform so fallback selection NEVER copies scaled CSS styles
+        const prevTransform = scaler.style.transform;
+        const prevOrigin = scaler.style.transformOrigin;
+        scaler.style.transform = "none";
+
+        let copied = false;
+        try {
+          if (navigator.clipboard && window.ClipboardItem) {
+            const htmlBlob = new Blob([preview.innerHTML], { type: "text/html" });
+            const textBlob = new Blob([preview.innerText], { type: "text/plain" });
+            await navigator.clipboard.write([
+              new ClipboardItem({
+                "text/html": htmlBlob,
+                "text/plain": textBlob
+              })
+            ]);
+            copied = true;
+          }
+        } catch (err) {
+          console.warn("ClipboardItem API unavailable or rejected, using selection fallback:", err);
+        }
+
+        if (!copied) {
+          // Fallback: DOM selection copy
+          try {
+            const range = document.createRange();
+            range.selectNodeContents(preview);
+            const sel = window.getSelection();
+            sel.removeAllRanges();
+            sel.addRange(range);
+            copied = document.execCommand("copy");
+            sel.removeAllRanges();
+          } catch (e) {
+            console.error("execCommand fallback failed:", e);
+          }
+        }
+
+        // Restore scale view
+        scaler.style.transform = prevTransform;
+        scaler.style.transformOrigin = prevOrigin;
+
+        if (copied) {
+          showToast("Formatted signature copied! Ready to paste into Apple Mail.");
+        } else {
+          showToast("Could not auto-copy. Please select and copy manually.");
+        }
+      });
+
+      // Copy Raw HTML Code
+      document.getElementById("btnCopyCode").addEventListener("click", async () => {
+        const preview = document.getElementById("signaturePreview");
+        try {
+          await navigator.clipboard.writeText(preview.innerHTML);
+          showToast("Raw HTML code copied to clipboard!");
+        } catch (e) {
+          const ta = document.createElement("textarea");
+          ta.value = preview.innerHTML;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand("copy");
+          document.body.removeChild(ta);
+          showToast("Raw HTML code copied to clipboard!");
+        }
+      });
+
+      // Initial execution
+      renderBanners();
+      setTimeout(adjustPreviewScaling, 150);
+      // Double check after fonts/images load
+      window.addEventListener("load", adjustPreviewScaling);
+    </script>
+  </body>
+</html>
