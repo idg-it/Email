@@ -487,41 +487,7 @@
                     "
                   >
                     <tbody>
-                      <!-- ROW 1: EMPLOYEE NAME & TITLE HEADER (Full width, fits any length) -->
-                      <tr>
-                        <td style="padding: 0 0 12px 0">
-                          <div
-                            id="displayFullName"
-                            style="
-                              font-family: Helvetica, Arial, sans-serif;
-                              font-size: 14px;
-                              line-height: 18px;
-                              font-weight: bold;
-                              color: #003057;
-                              letter-spacing: 0.2px;
-                              margin: 0;
-                            "
-                          >
-                            Donnica Yagao
-                          </div>
-                          <div
-                            id="displayJobTitle"
-                            style="
-                              font-family: Helvetica, Arial, sans-serif;
-                              font-size: 12px;
-                              line-height: 16px;
-                              font-weight: bold;
-                              color: #003057;
-                              letter-spacing: 0.2px;
-                              margin: 2px 0 0 0;
-                            "
-                          >
-                            IT Manager
-                          </div>
-                        </td>
-                      </tr>
-
-                      <!-- ROW 2: IDG LOGO & CONTACT INFO SIDE-BY-SIDE -->
+                      <!-- IDG LOGO & CONTACT INFO SIDE-BY-SIDE -->
                       <tr>
                         <td style="padding: 0 0 10px 0">
                           <table
@@ -575,7 +541,7 @@
                                         <td
                                           style="
                                             width: 20px;
-                                            padding: 0 0 4px 0;
+                                            padding: 0 0 5px 0;
                                             font-size: 1px;
                                             line-height: 1px;
                                           "
@@ -583,19 +549,19 @@
                                           &nbsp;
                                         </td>
                                         <td
-                                          id="displayEntityName"
+                                          id="displayNameRole"
                                           valign="top"
                                           style="
                                             font-family: Helvetica, Arial, sans-serif;
                                             font-size: 13.5px;
-                                            line-height: 16px;
+                                            line-height: 17px;
                                             font-weight: bold;
                                             color: #003057;
-                                            letter-spacing: 0.4px;
-                                            padding: 0 0 4px 0;
+                                            letter-spacing: 0.2px;
+                                            padding: 0 0 5px 0;
                                           "
                                         >
-                                          IDG Group DMCC
+                                          Donnica Yagao&nbsp;&middot;&nbsp;IT Manager
                                         </td>
                                       </tr>
                                       <tr>
@@ -974,9 +940,7 @@
       const inputLandline = document.getElementById("landline");
       const inputEmail = document.getElementById("email");
 
-      const displayFullName = document.getElementById("displayFullName");
-      const displayJobTitle = document.getElementById("displayJobTitle");
-      const displayEntityName = document.getElementById("displayEntityName");
+      const displayNameRole = document.getElementById("displayNameRole");
       const displayEntityAddress = document.getElementById("displayEntityAddress");
       const displayMobileLink = document.getElementById("displayMobileLink");
       const displayMobileIconLink = document.getElementById("displayMobileIconLink");
@@ -1202,12 +1166,19 @@
       }
 
       function updateSignature() {
-        displayFullName.textContent = inputName.value.trim() || "[Full Name]";
-        displayJobTitle.textContent = inputTitle.value.trim() || "[Job Title]";
+        const fullName = inputName.value.trim() || "[Full Name]";
+        const jobTitle = inputTitle.value.trim();
+
+        if (inputName.value.trim() && jobTitle) {
+          displayNameRole.innerHTML = `${fullName}&nbsp;&middot;&nbsp;${jobTitle}`;
+        } else if (inputName.value.trim()) {
+          displayNameRole.textContent = fullName;
+        } else {
+          displayNameRole.innerHTML = `[Full Name]&nbsp;&middot;&nbsp;[Job Title]`;
+        }
 
         const selectedLoc = selectLocation.value;
         const entityData = ENTITIES[selectedLoc] || ENTITIES.uae;
-        displayEntityName.textContent = entityData.entityName;
         displayEntityAddress.innerHTML = entityData.addressHtml;
 
         const mobileText = inputMobile.value.trim() || "+971 58 218 0369";
